@@ -141,5 +141,27 @@ public class UserModel {
 		}
 		return false;
 	}
-
+	
+	public static UserModel getUserLastPosition(int userID){
+		try{
+			Connection con = DBConnection.getActiveConnection();
+			String sql = "Select lat, users.long From users Where 'id' = ?";
+			PreparedStatement stmt;
+			stmt = con.prepareStatement(sql);
+			stmt.setInt(1, userID);
+			ResultSet rs = stmt.executeQuery();
+			
+			if (rs.next()) {
+				UserModel user = new UserModel();
+				user.lat = rs.getDouble("lat");
+				user.lon = rs.getDouble("long");
+				return user;
+			}
+			return null;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 }

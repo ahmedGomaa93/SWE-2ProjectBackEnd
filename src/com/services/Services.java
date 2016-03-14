@@ -74,7 +74,18 @@ public class Services {
 		json.put("status", status ? 1 : 0);
 		return json.toJSONString();
 	}
-
+	
+	@POST
+	@Path("/UserLastPosition")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getLastPosition(@FormParam("id") int userID){
+		UserModel user = UserModel.getUserLastPosition(userID);
+		JSONObject json = new JSONObject();
+		json.put("lat", user.getLat());
+		json.put("long", user.getLon());
+		return json.toJSONString();
+	}
+	
 	@GET
 	@Path("/")
 	@Produces(MediaType.TEXT_PLAIN)
