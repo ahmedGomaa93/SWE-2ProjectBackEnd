@@ -102,4 +102,16 @@ public class Services {
 		// Connection URL:
 		// mysql://$OPENSHIFT_MYSQL_DB_HOST:$OPENSHIFT_MYSQL_DB_PORT/
 	}
+	
+	@POST
+	@Path("/followers")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String followers(@FormParam("user id") String userId)
+	{
+		JSONObject json = new JSONObject();
+		
+		json.put("followers", UserModel.getFollowers(Integer.parseInt(userId)));
+		
+		return json.toJSONString();
+	}
 }
