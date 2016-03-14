@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -78,12 +79,19 @@ public class Services {
 	@POST
 	@Path("/UserLastPosition")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getLastPosition(@FormParam("id") int userID){
-		UserModel user = UserModel.getUserLastPosition(userID);
-		JSONObject json = new JSONObject();
-		json.put("lat", user.getLat());
-		json.put("long", user.getLon());
-		return json.toJSONString();
+	public String getLastPosition(@FormParam("id") String userID){
+		java.util.List<Double> place = new java.util.ArrayList<>();
+		place = UserModel.getUserLastPosition(Integer.parseInt(userID));
+		
+		if(place.size() != 0){
+			JSONObject json = new JSONObject();
+			json.put("lat", place.get(0));
+			json.put("long", place.get(1));
+			return json.toJSONString();
+		}
+		else{
+			return "This user doesn't update his current place yet";
+		}
 	}
 	
 	@GET

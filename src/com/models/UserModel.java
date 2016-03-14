@@ -142,20 +142,20 @@ public class UserModel {
 		return false;
 	}
 	
-	public static UserModel getUserLastPosition(int userID){
+	public static java.util.List<Double> getUserLastPosition(int userID){
+		java.util.List<Double> place = new java.util.ArrayList<>();
 		try{
 			Connection con = DBConnection.getActiveConnection();
-			String sql = "Select lat, users.long From users Where 'id' = ?";
+			String sql = "SELECT lat, users.long FROM `users` WHERE users.id = ?";
 			PreparedStatement stmt;
 			stmt = con.prepareStatement(sql);
 			stmt.setInt(1, userID);
 			ResultSet rs = stmt.executeQuery();
 			
 			if (rs.next()) {
-				UserModel user = new UserModel();
-				user.lat = rs.getDouble("lat");
-				user.lon = rs.getDouble("long");
-				return user;
+				place.add(rs.getDouble("lat"));
+				place.add(rs.getDouble("long"));
+				return place;
 			}
 			return null;
 		} catch (SQLException e) {
