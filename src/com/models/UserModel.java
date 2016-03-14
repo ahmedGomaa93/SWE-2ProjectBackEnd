@@ -195,6 +195,46 @@ public class UserModel {
 		return null;	
 	}
 	
+	public static boolean follow(Integer followedId, Integer followerId)
+	{
+		try{
+			Connection conn = DBConnection.getActiveConnection();
+			String sql = "INSERT INTO followers (`followedId`, `followerId`) VALUES (?, ?)";
+			PreparedStatement stmt;
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, followedId);
+			stmt.setDouble(2, followerId);
+			
+			if (stmt.executeUpdate() > 0) 
+			{
+				return true;
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+		return false;	
+	}
+	
+	public static boolean unfollow(Integer followedId, Integer followerId)
+	{
+		try{
+			Connection conn = DBConnection.getActiveConnection();
+			String sql = "DELETE FROM followers WHERE `followedId`= ? AND `followerId`= ?";
+			PreparedStatement stmt;
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, followedId);
+			stmt.setDouble(2, followerId);
+			
+			if (stmt.executeUpdate() > 0) 
+			{
+				return true;
+			}
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+		return false;	
+	}
+	
 	// method to get the user name by the user id
 	// it will return null if the there is no user with the supplied id
 	public static String getUserNameById(Integer id)

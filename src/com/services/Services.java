@@ -104,6 +104,31 @@ public class Services {
 	}
 	
 	@POST
+	@Path("/follow")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String follow(@FormParam("user id") String userId,
+			@FormParam("user to follow id") String userTofollowId) {
+		
+		JSONObject json = new JSONObject();
+		json.put("status", UserModel.follow(Integer.parseInt(userTofollowId),
+				Integer.parseInt(userId)) ? "followed" : "Error");
+		return json.toJSONString();
+	}
+	
+	@POST
+	@Path("/unfollow")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String unfollow(@FormParam("user id") String userId,
+			@FormParam("user to unfollow id") String userToUnfollowId) {
+		
+		JSONObject json = new JSONObject();
+		json.put("status", UserModel.unfollow(Integer.parseInt(userToUnfollowId),
+				Integer.parseInt(userId)) ? "unfollowed" : "Error");
+		
+		return json.toJSONString();
+	}
+	
+	@POST
 	@Path("/followers")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String followers(@FormParam("user id") String userId)
