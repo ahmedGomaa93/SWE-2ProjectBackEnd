@@ -2,6 +2,6 @@ package com.models;
 
 public interface Observer {
 
-  public void update(String userName, String body);
+  public void update(int reactionID);
 
 }

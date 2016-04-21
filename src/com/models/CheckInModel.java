@@ -156,12 +156,101 @@ public class CheckInModel {
 		return null;
 	}
 
-	public void likeCheckIn(String checkInID, String userID) {
+	public static void likeCheckIn(int checkInID, int userID) {
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			PreparedStatement stmt;
+			ResultSet result;
+			String sql;
+			int ownerID, reactionID;
+			
+			sql = "INSERT INTO reactions(`reactionType`,`check_ins_id`, `reactorId`) VALUES('like',?,?)";
+			
+			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt.setInt(1, checkInID);
+			stmt.setInt(2, userID);
+			
+			stmt.executeUpdate();
+			result = stmt.getGeneratedKeys();
+			
+			if(result.next()){
+				reactionID = result.getInt(1);
+				
+				sql = "SELECT users_userId FROM users_has_check_ins WHERE `check_ins_id` = ?";
+				stmt = conn.prepareStatement(sql);
+				stmt.setInt(1, checkInID);
+				result = stmt.executeQuery();
+				
+				if(result.next()){
+					ownerID = result.getInt(1);
+					
+					saveNotification(ownerID, reactionID, checkInID);
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void commentCheckIn(int checkInID, int userID, String comment) {
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			PreparedStatement stmt;
+			ResultSet result;
+			String sql;
+			int ownerID, reactionID;
+			
+			sql = "INSERT INTO reactions(`reactionType`,`reactionBody`,`check_ins_id`, `reactorId`) VALUES('comment',?,?,?)";
+			
+			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt.setString(1, comment);
+			stmt.setInt(2, checkInID);
+			stmt.setInt(3, userID);
+			
+			stmt.executeUpdate();
+			result = stmt.getGeneratedKeys();
+			
+			if(result.next()){
+				reactionID = result.getInt(1);
+				
+				sql = "SELECT users_userId FROM users_has_check_ins WHERE `check_ins_id` = ?";
+				stmt = conn.prepareStatement(sql);
+				stmt.setInt(1, checkInID);
+				result = stmt.executeQuery();
+				
+				if(result.next()){
+					ownerID = result.getInt(1);
+					
+					saveNotification(ownerID, reactionID, checkInID);
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	public void commentCheckIn(String checkInID, Integer userID, String comment) {
+	public static void saveNotification(int ownerID, int reactionID, int postID) {
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			PreparedStatement stmt;
+			String sql;
+			
+			sql = "INSERT INTO notifications(`ownerId`,`postId`, `reactionId`) VALUES(?,?,?)";
+			
+			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+			stmt.setInt(1, ownerID);
+			stmt.setInt(2, postID);
+			stmt.setInt(3, reactionID);
+			
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
-
+	
 	public CheckInModel getCheckIns(Integer userID) {
 		return null;
 	}

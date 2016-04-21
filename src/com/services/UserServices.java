@@ -172,4 +172,22 @@ public class UserServices {
 		
 		return null;
 	}
+	
+	@POST
+	@Path("/likeCheckIn")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String likeCheckIn(@FormParam("checkInID") int checkInID, @FormParam("userID") int userID){
+		CheckInModel.likeCheckIn(checkInID, userID);
+
+		return null;
+	}
+	
+	@POST
+	@Path("/commentCheckIn")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String commentCheckIn(@FormParam("checkInID") int checkInID, @FormParam("userID") int userID, @FormParam("comment") String comment){
+		CheckInModel.commentCheckIn(checkInID, userID, comment);
+
+		return null;
+	}
 }
