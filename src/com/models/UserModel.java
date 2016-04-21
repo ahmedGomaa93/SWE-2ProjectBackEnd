@@ -11,14 +11,21 @@ import org.json.simple.JSONObject;
 import com.mysql.jdbc.Statement;
 
 public class UserModel {
-
 	
+	private int id;
 	private String name;
 	private String email;
 	private String pass;
-	private Integer id;
 	private Double lat;
 	private Double lon;
+	
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
 	
 	public String getPass(){
 		return pass;
@@ -42,14 +49,6 @@ public class UserModel {
 
 	public void setEmail(String email) {
 		this.email = email;
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
 	}
 
 	public Double getLat() {
@@ -98,8 +97,6 @@ public class UserModel {
 		}
 		return null;
 	}
-
-	
 	
 	public static UserModel login(String email, String pass) {
 		try {
@@ -125,6 +122,28 @@ public class UserModel {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return null;
+	}
+	
+	// method to get the user name by the user id
+	// it will return null if the there is no user with the supplied id
+	public static String getUserNameById(Integer id)
+	{
+		try{
+			Connection conn = DBConnection.getActiveConnection();
+			String sql = "select * from users WHERE `id`= ?";
+			PreparedStatement stmt;
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, id);
+			ResultSet rs = stmt.executeQuery();
+			if(rs.next())
+			{
+				return rs.getString("name");
+			}	
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+			
 		return null;
 	}
 
@@ -168,33 +187,6 @@ public class UserModel {
 		return null;
 	}
 	
-	// method to get list of followers of the user with the followed id
-	// it will return a json array containing list of followers each follower with id and name 
-	public static JSONArray getFollowers(Integer followedId)
-	{
-		JSONArray followers = new JSONArray();
-		try{
-			Connection conn = DBConnection.getActiveConnection();
-			String sql = "select * from followers WHERE `followedId`= ?";
-			PreparedStatement stmt;
-			stmt = conn.prepareStatement(sql);
-			stmt.setInt(1, followedId);
-			ResultSet rs = stmt.executeQuery();
-			while(rs.next())
-			{
-				JSONObject follower = new JSONObject();
-				follower.put("follower id", rs.getInt("followerId"));
-				follower.put("follower name", getUserNameById(rs.getInt("followerId")));
-				followers.add(follower);
-			}
-			return followers;
-			
-		}catch(SQLException e){
-			e.printStackTrace();
-		}
-		return null;	
-	}
-	
 	public static boolean follow(Integer followedId, Integer followerId)
 	{
 		try{
@@ -235,26 +227,30 @@ public class UserModel {
 		return false;	
 	}
 	
-	// method to get the user name by the user id
-	// it will return null if the there is no user with the supplied id
-	public static String getUserNameById(Integer id)
+	// method to get list of followers of the user with the followed id
+	// it will return a json array containing list of followers each follower with id and name 
+	public static JSONArray getFollowers(Integer followedId)
 	{
+		JSONArray followers = new JSONArray();
 		try{
 			Connection conn = DBConnection.getActiveConnection();
-			String sql = "select * from users WHERE `id`= ?";
+			String sql = "select * from followers WHERE `followedId`= ?";
 			PreparedStatement stmt;
 			stmt = conn.prepareStatement(sql);
-			stmt.setInt(1, id);
+			stmt.setInt(1, followedId);
 			ResultSet rs = stmt.executeQuery();
-			if(rs.next())
+			while(rs.next())
 			{
-				return rs.getString("name");
+				JSONObject follower = new JSONObject();
+				follower.put("follower id", rs.getInt("followerId"));
+				follower.put("follower name", getUserNameById(rs.getInt("followerId")));
+				followers.add(follower);
 			}
+			return followers;
 			
 		}catch(SQLException e){
 			e.printStackTrace();
 		}
-		
-		return null;
+		return null;	
 	}
 }

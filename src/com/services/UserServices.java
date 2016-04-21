@@ -21,11 +21,11 @@ import org.json.simple.JSONObject;
 import com.models.DBConnection;
 import com.models.UserModel;
 
-@Path("/")
-public class Services {
+@Path("/User")
+public class UserServices {
 
 	/*
-	 * @GET
+	 * @POST
 	 * 
 	 * @Path("/signup")
 	 * 
@@ -36,8 +36,8 @@ public class Services {
 	@POST
 	@Path("/signup")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String signUp(@FormParam("name") String name,
-			@FormParam("email") String email, @FormParam("pass") String pass) {
+	public String signUp(@FormParam("name") String name, @FormParam("email") String email,
+			@FormParam("pass") String pass) {
 		UserModel user = UserModel.addNewUser(name, email, pass);
 		JSONObject json = new JSONObject();
 		json.put("id", user.getId());
@@ -92,15 +92,6 @@ public class Services {
 		else{
 			return "This user doesn't update his current place yet";
 		}
-	}
-	
-	@GET
-	@Path("/")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getJson() {
-		return "Hello after editing";
-		// Connection URL:
-		// mysql://$OPENSHIFT_MYSQL_DB_HOST:$OPENSHIFT_MYSQL_DB_PORT/
 	}
 	
 	@POST
