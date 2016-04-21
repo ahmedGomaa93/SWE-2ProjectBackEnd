@@ -1,10 +1,6 @@
 package com.services;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
+import java.util.ArrayList;
 
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -16,9 +12,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Viewable;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.models.DBConnection;
+import com.models.CheckInModel;
 import com.models.UserModel;
 
 @Path("/User")
@@ -101,8 +98,7 @@ public class UserServices {
 			@FormParam("user to follow id") String userTofollowId) {
 		
 		JSONObject json = new JSONObject();
-		json.put("status", UserModel.follow(Integer.parseInt(userTofollowId),
-				Integer.parseInt(userId)) ? "followed" : "Error");
+		json.put("status", UserModel.follow(Integer.parseInt(userTofollowId), Integer.parseInt(userId)) ? "followed" : "Error");
 		return json.toJSONString();
 	}
 	
@@ -113,8 +109,7 @@ public class UserServices {
 			@FormParam("user to unfollow id") String userToUnfollowId) {
 		
 		JSONObject json = new JSONObject();
-		json.put("status", UserModel.unfollow(Integer.parseInt(userToUnfollowId),
-				Integer.parseInt(userId)) ? "unfollowed" : "Error");
+		json.put("status", UserModel.unfollow(Integer.parseInt(userToUnfollowId), Integer.parseInt(userId)) ? "unfollowed" : "Error");
 		
 		return json.toJSONString();
 	}
@@ -129,5 +124,52 @@ public class UserServices {
 		json.put("followers", UserModel.getFollowers(Integer.parseInt(userId)));
 		
 		return json.toJSONString();
+	}
+	
+	@POST
+	@Path("/checkIn")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String checkIn(@FormParam("userID") int userID, @FormParam("placeID") int placeID, @FormParam("checkInBody") String body){
+		CheckInModel checkInPost = new CheckInModel();
+		JSONObject json = new JSONObject();
+		
+		checkInPost = CheckInModel.checkIn(userID, placeID, body);
+		
+		if(checkInPost != null){
+			json.put("checkInId", checkInPost.getCheckInID());
+			json.put("userID", checkInPost.getUserID());
+			json.put("placeID", checkInPost.getPlaceID());
+			json.put("checkInBody", checkInPost.getCheckInBody());
+			json.put("checkInDate", checkInPost.getDate());
+			json.put("liks", checkInPost.getLikes());
+			json.put("comments", checkInPost.getComments());
+			
+			return json.toJSONString();
+		}
+		
+		return null;
+	}
+	
+	@POST
+	@Path("/savePlace")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String savePlace(@FormParam("userID") int userID, @FormParam("placeID") int placeID){
+		ArrayList<Integer> userPlaces = new ArrayList<>();
+		JSONArray jsonArray = new JSONArray();
+		JSONObject json = new JSONObject();
+		
+		userPlaces = UserModel.savePlace(userID, placeID);
+		
+		if(userPlaces != null && userPlaces.size() > 0){
+			for (Integer placeId : userPlaces) {
+				json.put("userPlaceID", placeId);
+				
+				jsonArray.add(json);
+			}
+			
+			return jsonArray.toJSONString();
+		}
+		
+		return null;
 	}
 }

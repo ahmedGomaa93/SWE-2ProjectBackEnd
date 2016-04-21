@@ -105,7 +105,6 @@ public class PlaceModel {
 				
 				return newPlace;
 			}
-			return null;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -117,7 +116,43 @@ public class PlaceModel {
 	public PlaceModel getPlacebyCoordinates(Double latitude, Double longitude) {
 		return null;
 	}
-
+	
+	public static ArrayList<PlaceModel> getPlacebyName(String name){
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			ArrayList<PlaceModel> places = new ArrayList<>();
+			PlaceModel place = new PlaceModel();
+			PreparedStatement stmt;
+			ResultSet result;
+			String sql;
+			
+			sql = "SELECT * FROM places WHERE (name Like ?'%' OR name LIKE '% '?'%')";
+			
+			stmt = conn.prepareStatement(sql);
+			
+			stmt.setString(1, name);
+			stmt.setString(2, name);
+			
+			result = stmt.executeQuery();
+			
+			while (result.next()) {
+				place.placeID = result.getInt(1);
+				place.name = result.getString("name");
+				place.description = result.getString("description");
+				place.latitude = result.getDouble("latitude");
+				place.longitude = result.getDouble("longitude");
+				
+				places.add(place);
+			}
+			return places;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 	//public abstract ArrayList<Places> sort();
 
 	public int ratePlace(String placeID) {

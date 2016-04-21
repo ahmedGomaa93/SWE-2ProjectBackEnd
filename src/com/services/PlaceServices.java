@@ -13,10 +13,12 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Viewable;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.models.DBConnection;
@@ -42,6 +44,29 @@ public class PlaceServices {
 		json.put("long", newPlace.getLongitude());
 		
 		return json.toJSONString();
+	}
+	
+	@POST
+	@Path("/getPlacebyName")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getPlacebyCoordinates(@FormParam("name") String name) {
+		ArrayList<PlaceModel> places = new ArrayList<>();
+		JSONArray jsonArray = new JSONArray();
+		JSONObject json = new JSONObject();
+		
+		places = PlaceModel.getPlacebyName(name);
+		
+		for (PlaceModel place : places) {
+			json.put("id", place.getPlaceID());
+			json.put("name", place.getName());
+			json.put("description", place.getDescription());
+			json.put("lat", place.getLatitude());
+			json.put("long", place.getLongitude());
+			
+			jsonArray.add(json);
+		}
+		
+		return jsonArray.toJSONString();
 	}
 
 	/*@GET

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -18,6 +19,7 @@ public class UserModel {
 	private String pass;
 	private Double lat;
 	private Double lon;
+	private ArrayList<Integer> placesList;
 	
 	public Integer getId() {
 		return id;
@@ -65,6 +67,14 @@ public class UserModel {
 
 	public void setLon(Double lon) {
 		this.lon = lon;
+	}
+
+	public ArrayList<Integer> getPlacesList() {
+		return placesList;
+	}
+
+	public void setPlacesList(ArrayList<Integer> placesList) {
+		this.placesList = placesList;
 	}
 
 	public static UserModel addNewUser(String name, String email, String pass) {
@@ -252,5 +262,44 @@ public class UserModel {
 			e.printStackTrace();
 		}
 		return null;	
+	}
+	
+	public static ArrayList<Integer> savePlace(Integer userID, Integer placeID){
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			PreparedStatement stmt;
+			ResultSet result;
+			String sql;
+			int placeId;
+			ArrayList<Integer> savedPlaces = new ArrayList<>();
+			
+			sql = "INSERT INTO users_has_places(`users_userId`,`places_placeId`) VALUES(?,?)";
+			
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, userID);
+			stmt.setInt(2, placeID);
+			int rows = stmt.executeUpdate();
+			
+			if(rows > 0){
+				sql = "SELECT places_placeId FROM users_has_places WHERE `users_userId` = ?";
+				stmt = conn.prepareStatement(sql);
+				stmt.setInt(1, userID);
+				
+				result = stmt.executeQuery();
+				
+				while(result.next()){
+					placeId = result.getInt(1);
+					
+					savedPlaces.add(placeId);
+				}
+				
+				return savedPlaces;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 }
