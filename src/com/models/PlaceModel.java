@@ -84,7 +84,7 @@ public class PlaceModel {
 			sql = "INSERT INTO places(`name`,`description`, `latitude`, `longitude`) VALUES(?,?,?,?)";
 			
 			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			System.out.println(stmt);
+			
 			stmt.setString(1, name);
 			stmt.setString(2, description);
 			stmt.setDouble(3, latitude);
