@@ -144,22 +144,6 @@ public class CheckInModel {
 					checkInpost.checkInBody = body;
 					checkInpost.date = result.getTimestamp("date");
 				}
-				
-				//Register post subject
-				PostSubject postSubject = new PostSubject();
-				LikeObserver likeObserver = new LikeObserver();
-				CommentObserver commentObserver = new CommentObserver();
-				
-				likeObserver.setObserverID(userID);
-				commentObserver.setObserverID(userID);
-				
-				postSubject.register(likeObserver);
-				postSubject.register(commentObserver);
-				
-				likeObserver.setPost(postSubject);
-				commentObserver.setPost(postSubject);
-				
-				return checkInpost;
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
