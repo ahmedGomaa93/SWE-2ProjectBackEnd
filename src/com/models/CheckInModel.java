@@ -11,44 +11,57 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.simple.JSONObject;
+
 import com.mysql.jdbc.Statement;
 import com.sun.jmx.snmp.Timestamp;
 
 public class CheckInModel {
 
 	private int checkInID;
-	private int userID;
+	private int ownerID;
+	private String ownerName;
 	private int placeID;
+	private String placeName;
 	private String checkInBody;
 	private java.sql.Timestamp date;
-	private ArrayList<String> likes;
-	private Map<String, String> comments;
-	  
+	private ArrayList<ReactionModel> reactions;
+
 	public CheckInModel() {
 		// TODO Auto-generated constructor stub
-		setComments(new HashMap<String, String>());
+		checkInID = 0;
+		ownerID = 0;
+		ownerName = "";
+		placeID = 0;
+		placeName = "";
+		checkInBody = "";
+		date = null;
+		reactions = new ArrayList<>();
 	}
-
-
+	
 	public int getCheckInID() {
 		return checkInID;
 	}
-
 
 	public void setCheckInID(int checkInID) {
 		this.checkInID = checkInID;
 	}
 
-
-	public int getUserID() {
-		return userID;
+	public int getOwnerID() {
+		return ownerID;
 	}
 
-
-	public void setUserID(int userID) {
-		this.userID = userID;
+	public void setOwnerID(int ownerID) {
+		this.ownerID = ownerID;
+	}
+	
+	public String getOwnerName() {
+		return ownerName;
 	}
 
+	public void setOwnerName(String ownerName) {
+		this.ownerName = ownerName;
+	}
 
 	public int getPlaceID() {
 		return placeID;
@@ -57,6 +70,16 @@ public class CheckInModel {
 
 	public void setPlaceID(int placeID) {
 		this.placeID = placeID;
+	}
+
+
+	public String getPlaceName() {
+		return placeName;
+	}
+
+
+	public void setPlaceName(String placeName) {
+		this.placeName = placeName;
 	}
 
 
@@ -79,24 +102,12 @@ public class CheckInModel {
 		this.date = date;
 	}
 
-
-	public ArrayList<String> getLikes() {
-		return likes;
+	public ArrayList<ReactionModel> getReactions() {
+		return reactions;
 	}
 
-
-	public void setLikes(ArrayList<String> likes) {
-		this.likes = likes;
-	}
-
-
-	public Map<String, String> getComments() {
-		return comments;
-	}
-
-
-	public void setComments(Map<String, String> comments) {
-		this.comments = comments;
+	public void setReactions(ArrayList<ReactionModel> reactions) {
+		this.reactions = reactions;
 	}
 
 	public static CheckInModel checkIn(int userID, int placeID, String body) {
@@ -108,27 +119,17 @@ public class CheckInModel {
 			String sql;
 			int checkInID;
 			
-			sql = "INSERT INTO check_ins(`body`,`date`) VALUES(?,NOW())";
+			sql = "INSERT INTO check_ins(`body`,`date`, `placeId`, `userId`) VALUES(?,NOW(),?,?)";
 			
 			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			stmt.setString(1, body);
+			stmt.setInt(2, placeID);
+			stmt.setInt(3, userID);
 			stmt.executeUpdate();
 			result = stmt.getGeneratedKeys();
 			
 			if(result.next()){
 				checkInID = result.getInt(1);
-				
-				sql = "INSERT INTO users_has_check_ins(`users_userId`,`check_ins_id`) VALUES(?,?)";
-				stmt = conn.prepareStatement(sql);
-				stmt.setInt(1, userID);
-				stmt.setInt(2, checkInID);
-				stmt.executeUpdate();
-				
-				sql = "INSERT INTO places_has_check_ins(`places_placeId`,`check_ins_id`) VALUES(?,?)";
-				stmt = conn.prepareStatement(sql);
-				stmt.setInt(1, placeID);
-				stmt.setInt(2, checkInID);
-				stmt.executeUpdate();
 				
 				//To get the date
 				sql = "SELECT * FROM check_ins WHERE `id` = ?";
@@ -138,13 +139,25 @@ public class CheckInModel {
 				
 				if(result.next()){
 					checkInpost.checkInID = checkInID;
-					checkInpost.userID = userID;
+					checkInpost.ownerID = userID;
 					checkInpost.placeID = placeID;
 					checkInpost.checkInBody = body;
 					checkInpost.date = result.getTimestamp("date");
-					checkInpost.likes = null;
-					checkInpost.comments = null;
 				}
+				
+				//Register post subject
+				PostSubject postSubject = new PostSubject();
+				LikeObserver likeObserver = new LikeObserver();
+				CommentObserver commentObserver = new CommentObserver();
+				
+				likeObserver.setObserverID(userID);
+				commentObserver.setObserverID(userID);
+				
+				postSubject.register(likeObserver);
+				postSubject.register(commentObserver);
+				
+				likeObserver.setPost(postSubject);
+				commentObserver.setPost(postSubject);
 				
 				return checkInpost;
 			}
@@ -156,81 +169,68 @@ public class CheckInModel {
 		return null;
 	}
 
-	public static void likeCheckIn(int checkInID, int userID) {
-		try {
-			Connection conn = DBConnection.getActiveConnection();
-			PreparedStatement stmt;
-			ResultSet result;
-			String sql;
-			int ownerID, reactionID;
-			
-			sql = "INSERT INTO reactions(`reactionType`,`check_ins_id`, `reactorId`) VALUES('like',?,?)";
-			
-			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			stmt.setInt(1, checkInID);
-			stmt.setInt(2, userID);
-			
-			stmt.executeUpdate();
-			result = stmt.getGeneratedKeys();
-			
-			if(result.next()){
-				reactionID = result.getInt(1);
-				
-				sql = "SELECT users_userId FROM users_has_check_ins WHERE `check_ins_id` = ?";
-				stmt = conn.prepareStatement(sql);
-				stmt.setInt(1, checkInID);
-				result = stmt.executeQuery();
-				
-				if(result.next()){
-					ownerID = result.getInt(1);
-					
-					saveNotification(ownerID, reactionID, checkInID);
-				}
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public static void likeCheckIn(int checkinID, int reactorID) {
+		ReactionModel.saveReaction("like", checkinID, 0, reactorID, null);
 	}
 	
-	public static void commentCheckIn(int checkInID, int userID, String comment) {
+	public static void commentCheckIn(int checkinID, int reactorID, String comment) {
+		ReactionModel.saveReaction("comment", checkinID, 0, reactorID, comment);
+	}
+
+	public static CheckInModel getCheckIn(int checkinID){
 		try {
 			Connection conn = DBConnection.getActiveConnection();
+			CheckInModel checkinPost = new CheckInModel();
+			ReactionModel reaction = new ReactionModel();
 			PreparedStatement stmt;
 			ResultSet result;
 			String sql;
-			int ownerID, reactionID;
 			
-			sql = "INSERT INTO reactions(`reactionType`,`reactionBody`,`check_ins_id`, `reactorId`) VALUES('comment',?,?,?)";
-			
-			stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			stmt.setString(1, comment);
-			stmt.setInt(2, checkInID);
-			stmt.setInt(3, userID);
-			
-			stmt.executeUpdate();
-			result = stmt.getGeneratedKeys();
-			
+			sql = "Select owners.name as ownerName, check_ins.body as checkinBody, check_ins.date as checkinDate,"
+					+ " places.name as placeName, reactions.reactionType, reactors.name as reactorName, "
+					+ "reactions.reactionDate, reactions.reactionBody From check_ins LEFT JOIN users as owners "
+					+ "ON owners.userId = check_ins.userId LEFT JOIN places ON check_ins.placeId = places.placeId "
+					+ "LEFT Join reactions ON check_ins.id = reactions.check_ins_id LEFT Join users as reactors "
+					+ "ON reactions.reactorId = reactors.userId WHERE check_ins.id = ?";
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, checkinID);
+			result = stmt.executeQuery();
+				
 			if(result.next()){
-				reactionID = result.getInt(1);
+				checkinPost.checkInID = checkinID;
+				checkinPost.ownerName = result.getString("ownerName");
+				checkinPost.checkInBody = result.getString("checkinBody");
+				checkinPost.date = result.getTimestamp("checkinDate");
+				checkinPost.placeName = result.getString("placeName");
 				
-				sql = "SELECT users_userId FROM users_has_check_ins WHERE `check_ins_id` = ?";
-				stmt = conn.prepareStatement(sql);
-				stmt.setInt(1, checkInID);
-				result = stmt.executeQuery();
+				reaction.setReactionType(result.getString("reactionType"));
+				reaction.setReactorName(result.getString("reactorName"));
+				reaction.setReactionDate(result.getTimestamp("reactionDate"));
+				reaction.setReactionBody(result.getString("reactionBody"));
 				
-				if(result.next()){
-					ownerID = result.getInt(1);
+				checkinPost.reactions.add(reaction);
+			}
+			
+			if(!result.isLast()){
+				while(result.next()){
+					reaction.setReactionType(result.getString("reactionType"));
+					reaction.setReactorName(result.getString("reactorName"));
+					reaction.setReactionDate(result.getTimestamp("reactionDate"));
+					reaction.setReactionBody(result.getString("reactionBody"));
 					
-					saveNotification(ownerID, reactionID, checkInID);
+					checkinPost.reactions.add(reaction);
 				}
 			}
+			
+			return checkinPost;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return null;
 	}
-
+	
 	public static void saveNotification(int ownerID, int reactionID, int postID) {
 		try {
 			Connection conn = DBConnection.getActiveConnection();
@@ -251,7 +251,79 @@ public class CheckInModel {
 		}
 	}
 	
-	public CheckInModel getCheckIns(Integer userID) {
+	public static ArrayList<CheckInModel> getUserCheckIns(Integer userID) {
+		try {
+			Connection conn = DBConnection.getActiveConnection();
+			ArrayList<CheckInModel> userPosts = new ArrayList<>();
+			CheckInModel checkinPost = new CheckInModel();
+			ReactionModel reaction = new ReactionModel();
+			PreparedStatement stmt;
+			ResultSet result;
+			String sql;
+			int checkinId, counter;
+			
+			sql = "Select check_ins.Id as checkinId, owners.name as ownerName, check_ins.body as checkinBody, "
+					+ "check_ins.date as checkinDate, check_ins.placeId as checkinPlaceId, places.name as placeName, reactions.reactionType, "
+					+ "reactors.name as reactorName, reactions.reactionDate, reactions.reactionBody "
+					+ "From check_ins LEFT JOIN users as owners ON owners.userId = check_ins.userId "
+					+ "LEFT JOIN places ON check_ins.placeId = places.placeId LEFT Join reactions ON"
+					+ " check_ins.id = reactions.check_ins_id LEFT Join users as reactors "
+					+ "ON reactions.reactorId = reactors.userId WHERE check_ins.userId = ?";
+			
+			stmt = conn.prepareStatement(sql);
+			stmt.setInt(1, userID);
+			result = stmt.executeQuery();
+			
+			while(result.next()){
+				checkinId = result.getInt("checkinId");
+				counter = 0;
+				
+				for (CheckInModel post : userPosts) {
+						if(post.checkInID == checkinId){
+							reaction.setReactionType(result.getString("reactionType"));
+							reaction.setReactorName(result.getString("reactorName"));
+							reaction.setReactionDate(result.getTimestamp("reactionDate"));
+							reaction.setReactionBody(result.getString("reactionBody"));
+							
+							checkinPost.reactions.add(reaction);
+							break;
+						}
+						
+						counter++;
+					}
+				
+				if(counter == userPosts.size()){
+					checkinPost = new CheckInModel();
+					
+					checkinPost.checkInID = checkinId;
+					checkinPost.ownerID = userID;
+					checkinPost.checkInBody = result.getString("checkinBody");
+					checkinPost.date = result.getTimestamp("checkinDate");
+					checkinPost.placeID = result.getInt("checkinPlaceId");
+					checkinPost.placeName = result.getString("placeName");
+					checkinPost.ownerName = result.getString("ownerName");
+					
+					if(result.getString("reactionType") != null){
+						reaction.setReactionType(result.getString("reactionType"));
+						reaction.setReactorName(result.getString("reactorName"));
+						reaction.setReactionDate(result.getTimestamp("reactionDate"));
+						reaction.setReactionBody(result.getString("reactionBody"));
+						checkinPost.reactions.add(reaction);
+					}
+					else{
+						checkinPost.reactions = null;
+					}
+					
+					userPosts.add(checkinPost);
+				}
+			}
+			
+			return userPosts;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		return null;
 	}
 }

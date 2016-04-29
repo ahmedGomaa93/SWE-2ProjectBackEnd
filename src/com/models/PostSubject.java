@@ -6,12 +6,10 @@ public class PostSubject implements Subject {
 
 	private ArrayList<Observer> observers;
 	private int postID;
-	private int reactionID;
 
 	public PostSubject() {
 		// TODO Auto-generated constructor stub
 		observers = new ArrayList<>();
-		reactionID = 0;
 	}
 	public ArrayList<Observer> getObservers() {
 		return observers;
@@ -28,14 +26,6 @@ public class PostSubject implements Subject {
 	public void setPostID(int postID) {
 		this.postID = postID;
 	}
-	
-	public int getreactionID() {
-		return reactionID;
-	}
-
-	public void setreactionID(int reactionID) {
-		this.reactionID = reactionID;
-	}
 
 	@Override
 	public void register(Observer newObserver) {
@@ -49,13 +39,24 @@ public class PostSubject implements Subject {
 	}
 	
 	@Override
-	public void notifyObservers() {
-		for (Observer observer : observers) {
-			observer.update(reactionID);
+	public void notifyObservers(String reactionType, int reactionID) {
+		if(reactionType.equalsIgnoreCase("like")){
+			for (Observer observer : observers) {
+				if(observer.getClass().equals(LikeObserver.class)){
+					observer.update(reactionID);
+				}
+			}
+		}else if(reactionType.equalsIgnoreCase("like")){
+			for (Observer observer : observers) {
+				if(observer.getClass().equals(CommentObserver.class)){
+					observer.update(reactionID);
+				}
+			}
 		}
 	}
 
-	public void react(){
-		notifyObservers();
+	public void react(String reactionType, int checkinID, int tipID, int reactorID, String reactionBody){
+		int reactionID = ReactionModel.saveReaction(reactionType, checkinID, tipID, reactorID, reactionBody);
+		notifyObservers(reactionType, reactionID);
 	}
 }

@@ -16,6 +16,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.models.CheckInModel;
+import com.models.NotificationModel;
+import com.models.ReactionModel;
 import com.models.UserModel;
 
 @Path("/User")
@@ -129,20 +131,20 @@ public class UserServices {
 	@POST
 	@Path("/checkIn")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String checkIn(@FormParam("userID") int userID, @FormParam("placeID") int placeID, @FormParam("checkInBody") String body){
+	public String checkIn(@FormParam("userID") int userID, @FormParam("placeID") int placeID, 
+			@FormParam("checkInBody") String body){
 		CheckInModel checkInPost = new CheckInModel();
 		JSONObject json = new JSONObject();
 		
 		checkInPost = CheckInModel.checkIn(userID, placeID, body);
 		
 		if(checkInPost != null){
-			json.put("checkInId", checkInPost.getCheckInID());
-			json.put("userID", checkInPost.getUserID());
+			json.put("checkInID", checkInPost.getCheckInID());
+			json.put("ownerID", checkInPost.getOwnerID());
 			json.put("placeID", checkInPost.getPlaceID());
 			json.put("checkInBody", checkInPost.getCheckInBody());
 			json.put("checkInDate", checkInPost.getDate());
-			json.put("liks", checkInPost.getLikes());
-			json.put("comments", checkInPost.getComments());
+			json.put("reactions", null);
 			
 			return json.toJSONString();
 		}
@@ -189,5 +191,128 @@ public class UserServices {
 		CheckInModel.commentCheckIn(checkInID, userID, comment);
 
 		return null;
+	}
+	
+
+	@POST
+	@Path("/getNotifications")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getNotifications(@FormParam("userID") int userID){
+		ArrayList<NotificationModel> notifications = NotificationModel.getUnreadNotifications(userID);
+		JSONArray jsonArray = new JSONArray();
+		JSONObject json = new JSONObject();
+		
+		if(notifications != null && notifications.size() > 0){
+			for (NotificationModel notification : notifications) {
+				json.put("notificationId", notification.getNotificationID());
+				json.put("notificationDescription", notification.getNotificationDescription());
+				
+				jsonArray.add(json);
+			}
+			
+			return jsonArray.toJSONString();
+		}
+		return null;
+	}
+	
+	@POST
+	@Path("/getAllNotifications")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getAllNotifications(@FormParam("userID") int userID){
+		ArrayList<NotificationModel> notifications = NotificationModel.getAllNotifications(userID);
+		JSONArray jsonArray = new JSONArray();
+		JSONObject json = new JSONObject();
+		
+		if(notifications != null && notifications.size() > 0){
+			for (NotificationModel notification : notifications) {
+				json.put("notificationId", notification.getNotificationID());
+				json.put("notificationDescription", notification.getNotificationDescription());
+				
+				jsonArray.add(json);
+			}
+			
+			return jsonArray.toJSONString();
+		}
+		return null;
+	}
+	
+	@POST
+	@Path("/respondToNotification")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String respondToNotification(@FormParam("notificationId") int notificationID){
+		JSONObject postJson = new JSONObject(), reactionJson = new JSONObject();
+		JSONArray reactionsJson = new JSONArray();
+		NotificationModel notification;
+		CheckInModel checkinPost;
+		
+		notification = NotificationModel.getNotificationByID(notificationID);
+		checkinPost = notification.respond();
+		
+		postJson.put("checkinId", checkinPost.getCheckInID());
+		postJson.put("checkinOwnerId", checkinPost.getOwnerID());
+		postJson.put("checkinOwnerName", checkinPost.getOwnerName());
+		postJson.put("checkinPlaceId", checkinPost.getPlaceID());
+		postJson.put("checkinPlaceName", checkinPost.getPlaceName());
+		postJson.put("checkinBody", checkinPost.getCheckInBody());
+		postJson.put("checkinDate", checkinPost.getDate());
+		
+		for (ReactionModel reaction : checkinPost.getReactions()) {
+			reactionJson.put("reactionType", reaction.getReactionType());
+			reactionJson.put("reactorName", reaction.getReactorName());
+			reactionJson.put("reactionDate", reaction.getReactionDate());
+			reactionJson.put("reactionBody", reaction.getReactionBody());
+			
+			reactionsJson.add(reactionJson);
+		}
+		postJson.put("reactions", reactionsJson);
+		
+		return postJson.toJSONString();
+	}
+	
+	@POST
+	@Path("/showHomePage")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String showHomePage(@FormParam("userID") int userID){
+		ArrayList<CheckInModel> userPosts = new ArrayList<>();
+		ArrayList<CheckInModel> followersPosts = new ArrayList<>();
+		ArrayList<CheckInModel> homePosts = new ArrayList<>();
+		JSONArray userFollowers = new JSONArray(), reactionsJson = new JSONArray(), posts = new JSONArray();
+		JSONObject postJson = new JSONObject(), reactionJson = new JSONObject();
+		
+		userPosts = CheckInModel.getUserCheckIns(userID);
+		
+		userFollowers = UserModel.getFollowers(userID);
+		
+		homePosts.addAll(userPosts);
+		homePosts.addAll(followersPosts);
+		
+		for (CheckInModel checkinPost : homePosts) {
+			postJson.put("checkinId", checkinPost.getCheckInID());
+			postJson.put("checkinOwnerId", checkinPost.getOwnerID());
+			postJson.put("checkinOwnerName", checkinPost.getOwnerName());
+			postJson.put("checkinPlaceId", checkinPost.getPlaceID());
+			postJson.put("checkinPlaceName", checkinPost.getPlaceName());
+			postJson.put("checkinBody", checkinPost.getCheckInBody());
+			postJson.put("checkinDate", checkinPost.getDate());
+			
+			if(checkinPost.getReactions() != null){
+				for (ReactionModel reaction : checkinPost.getReactions()) {
+					reactionJson.put("reactionType", reaction.getReactionType());
+					reactionJson.put("reactorName", reaction.getReactorName());
+					reactionJson.put("reactionDate", reaction.getReactionDate());
+					reactionJson.put("reactionBody", reaction.getReactionBody());
+					
+					reactionsJson.add(reactionJson);
+				}
+				postJson.put("reactions", reactionsJson);
+			}
+			else{
+				postJson.put("reactions", null);
+			}
+			
+			posts.add(postJson);
+		}
+		
+		return posts.toJSONString();
 	}
 }

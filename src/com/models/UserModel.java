@@ -244,7 +244,7 @@ public class UserModel {
 		JSONArray followers = new JSONArray();
 		try{
 			Connection conn = DBConnection.getActiveConnection();
-			String sql = "select * from followers WHERE `followedId`= ?";
+			String sql = "select * from followers WHERE `followerID`= ?";
 			PreparedStatement stmt;
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, followedId);
@@ -254,6 +254,7 @@ public class UserModel {
 				JSONObject follower = new JSONObject();
 				follower.put("follower id", rs.getInt("followerId"));
 				follower.put("follower name", getUserNameById(rs.getInt("followerId")));
+				
 				followers.add(follower);
 			}
 			return followers;
